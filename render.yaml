@@ -37,7 +37,6 @@ services:
   - type: web
     name: final-minor-client
     runtime: static
-    plan: free
     rootDir: client
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
