@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #eff6ff;
+  /* blue-50 */
+  --color-secondary: #3b82f6;
+  /* blue-500 */
+  --color-accent: #2563eb;
+  /* blue-600 */
+  --color-bg-main: #FFFFFF;
+  --color-bg-card: #f8fafc;
+  /* slate-50 */
+  --color-text-main: #0f172a;
+  /* slate-900 */
+  --color-border: #e2e8f0;
+  /* slate-200 */
+  --color-hover: #1d4ed8;
+  /* blue-700 */
+}
+
+@layer base {
+  body {
+    background-color: var(--color-bg-main);
+    color: var(--color-text-main);
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-secondary);
+}
+
+/* Toast slide-in animation */
+@keyframes slide-in {
+  from { transform: translateX(110%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+.animate-slide-in {
+  animation: slide-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Success progress bar shrink */
+@keyframes shrink {
+  from { width: 100%; }
+  to   { width: 0%; }
+}
