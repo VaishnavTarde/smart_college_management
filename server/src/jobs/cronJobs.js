@@ -1,5 +1,6 @@
 const cron = require('node-cron');
 const Event = require('../models/Event');
+const Club = require('../models/Club');
 const Notification = require('../models/Notification');
 const JobLog = require('../models/JobLog');
 const User = require('../models/User');
