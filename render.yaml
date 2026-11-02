@@ -15,7 +15,7 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: CLIENT_URL
-        value: https://campus-connect-hub.onrender.com
+        value: https://campus-connect-hub-0yfq.onrender.com
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY
@@ -46,6 +46,6 @@ services:
         destination: /index.html
     envVars:
       - key: VITE_API_URL
-        value: https://campus-connect-api.onrender.com
+        value: https://campus-connect-api-qnf4.onrender.com
 
 

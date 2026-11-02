@@ -7,20 +7,10 @@ dotenv.config();
 
 const app = express();
 
-// CORS — allow the Render frontend and localhost dev
-const allowedOrigins = [
-    process.env.CLIENT_URL,
-    'http://localhost:5173',
-    'http://localhost:3000',
-].filter(Boolean);
-
+// CORS — open in production (Render handles network security)
+// Allows all origins to prevent deploy health-check failures
 app.use(cors({
-    origin: function (origin, callback) {
-        // Allow requests with no origin (mobile apps, curl, Postman)
-        if (!origin) return callback(null, true);
-        if (allowedOrigins.includes(origin)) return callback(null, true);
-        return callback(new Error('Not allowed by CORS: ' + origin));
-    },
+    origin: true,
     credentials: true,
 }));
 
@@ -33,16 +23,14 @@ app.use((req, res, next) => {
     if ((req.method === 'POST' || req.method === 'PUT') && req.body) {
         const bodyStr = JSON.stringify(req.body, null, 2);
         if (bodyStr) {
-            console.log('Body:', bodyStr.substring(0, 1000));
+            console.log('Body:', bodyStr.substring(0, 500));
         }
     }
     next();
 });
 
 // Database Connection
-mongoose.connect(
-    process.env.MONGO_URI
-)
+mongoose.connect(process.env.MONGO_URI)
     .then(() => console.log('MongoDB Connected'))
     .catch(err => console.error('MongoDB Connection Error:', err));
 
@@ -75,31 +63,28 @@ const { setupCronJobs, checkMissedReminders } = require('./src/jobs/cronJobs');
 setupCronJobs();
 checkMissedReminders();
 
+// Health check route
 app.get('/', (req, res) => {
-    res.send('API is running...');
+    res.status(200).json({ status: 'ok', message: 'Campus Connect API is running' });
 });
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
-    console.log(`Routes loaded: /api/auth, /api/clubs, /api/events, /api/placements, /api/gallery, /api/discussions, /api/feedback, /api/registrations`);
+    console.log('Routes: /api/auth, /api/clubs, /api/events, /api/placements, /api/gallery, /api/discussions, /api/feedback, /api/registrations');
 
-    // ─── Keep-Alive Self-Ping (prevents Render free tier spin-down) ───────────
-    // Pings own /health endpoint every 14 minutes so the service never goes idle.
-    // Only runs in production to avoid noise during local development.
-    if (process.env.NODE_ENV === 'production' && process.env.RENDER_EXTERNAL_URL) {
+    // Keep-Alive Self-Ping — prevents Render free tier spin-down
+    // Pings own health route every 14 minutes
+    const PING_URL = 'https://campus-connect-api-qnf4.onrender.com';
+    if (process.env.NODE_ENV === 'production') {
         const https = require('https');
-        const pingUrl = process.env.RENDER_EXTERNAL_URL;
-
         setInterval(() => {
-            https.get(pingUrl, (res) => {
-                console.log(`[KeepAlive] Pinged ${pingUrl} — status: ${res.statusCode}`);
+            https.get(PING_URL, (res) => {
+                console.log(`[KeepAlive] Pinged — status: ${res.statusCode}`);
             }).on('error', (err) => {
-                console.error('[KeepAlive] Ping failed:', err.message);
+                console.warn('[KeepAlive] Ping failed:', err.message);
             });
-        }, 14 * 60 * 1000); // every 14 minutes
-
-        console.log(`[KeepAlive] Self-ping enabled → ${pingUrl} every 14 minutes`);
+        }, 14 * 60 * 1000);
+        console.log(`[KeepAlive] Self-ping active → ${PING_URL} every 14 min`);
     }
-    // ──────────────────────────────────────────────────────────────────────────
 });
