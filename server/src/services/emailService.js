@@ -1,27 +1,58 @@
+const nodemailer = require('nodemailer');
 const { Resend } = require('resend');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Gmail SMTP Transporter (preferred for sending to any recipient without domain restriction)
+const getGmailTransporter = () => {
+    const user = process.env.GMAIL_USER ? process.env.GMAIL_USER.trim() : null;
+    const pass = process.env.GMAIL_APP_PASSWORD ? process.env.GMAIL_APP_PASSWORD.replace(/\s+/g, '') : null;
 
-const FROM_EMAIL = 'Campus Connect <onboarding@resend.dev>';
+    if (user && pass && !pass.includes('YOUR_16_CHAR')) {
+        return nodemailer.createTransport({
+            service: 'gmail',
+            auth: { user, pass }
+        });
+    }
+    return null;
+};
 
 const sendEmail = async (to, subject, html) => {
     try {
-        const { data, error } = await resend.emails.send({
-            from: FROM_EMAIL,
-            to,
-            subject,
-            html,
-        });
-
-        if (error) {
-            console.error('Error sending email via Resend:', error);
-            return false;
+        const gmailTransporter = getGmailTransporter();
+        if (gmailTransporter) {
+            const senderEmail = process.env.GMAIL_USER.trim();
+            const info = await gmailTransporter.sendMail({
+                from: `"Campus Connect Hub" <${senderEmail}>`,
+                to,
+                subject,
+                html
+            });
+            console.log(`[Email] Sent via Gmail to ${to} (MessageId: ${info.messageId})`);
+            return true;
         }
 
-        console.log('Email sent via Resend:', data.id);
-        return true;
+        // Fallback to Resend if Gmail is not configured
+        if (process.env.RESEND_API_KEY) {
+            const resend = new Resend(process.env.RESEND_API_KEY);
+            const { data, error } = await resend.emails.send({
+                from: 'Campus Connect <onboarding@resend.dev>',
+                to,
+                subject,
+                html,
+            });
+
+            if (error) {
+                console.error('[Email] Resend error:', error);
+                return false;
+            }
+
+            console.log(`[Email] Sent via Resend to ${to} (ID: ${data.id})`);
+            return true;
+        }
+
+        console.warn('[Email] No email service configured (set GMAIL_USER/GMAIL_APP_PASSWORD or RESEND_API_KEY).');
+        return false;
     } catch (error) {
-        console.error('Exception sending email:', error);
+        console.error('[Email] Exception sending email:', error.message);
         return false;
     }
 };
