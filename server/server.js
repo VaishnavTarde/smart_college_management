@@ -83,4 +83,23 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`Routes loaded: /api/auth, /api/clubs, /api/events, /api/placements, /api/gallery, /api/discussions, /api/feedback, /api/registrations`);
+
+    // ─── Keep-Alive Self-Ping (prevents Render free tier spin-down) ───────────
+    // Pings own /health endpoint every 14 minutes so the service never goes idle.
+    // Only runs in production to avoid noise during local development.
+    if (process.env.NODE_ENV === 'production' && process.env.RENDER_EXTERNAL_URL) {
+        const https = require('https');
+        const pingUrl = process.env.RENDER_EXTERNAL_URL;
+
+        setInterval(() => {
+            https.get(pingUrl, (res) => {
+                console.log(`[KeepAlive] Pinged ${pingUrl} — status: ${res.statusCode}`);
+            }).on('error', (err) => {
+                console.error('[KeepAlive] Ping failed:', err.message);
+            });
+        }, 14 * 60 * 1000); // every 14 minutes
+
+        console.log(`[KeepAlive] Self-ping enabled → ${pingUrl} every 14 minutes`);
+    }
+    // ──────────────────────────────────────────────────────────────────────────
 });
